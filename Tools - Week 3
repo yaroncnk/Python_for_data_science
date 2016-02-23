@@ -1,0 +1,26 @@
+Created on Tue Feb 23 12:08:23 2016
+
+@author: Yaron
+"""
+
+import pandas
+import numpy
+import seaborn
+import scipy
+import matplotlib.pyplot as plt
+
+data = pandas.read_csv('gapminder.csv', low_memory = False)
+
+#setting variables you will be working with to numeric
+data['alcconsumption'] = data['alcconsumption'].convert_objects(convert_numeric=True)
+data['armedforcesrate'] = data['armedforcesrate'].convert_objects(convert_numeric=True)
+data['employrate'] = data['employrate'].convert_objects(convert_numeric=True)
+
+# Pearson Correlation
+data_clean=data.dropna()
+
+print ('association between armedforcesrate and alcconsumption')
+print (scipy.stats.pearsonr(data_clean['armedforcesrate'], data_clean['alcconsumption']))
+
+print ('association between employrate and alcconsumption')
+print (scipy.stats.pearsonr(data_clean['employrate'], data_clean['alcconsumption']))
