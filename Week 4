@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul 13 00:24:33 2016
+
+@author: Yaron
+"""
+
+import numpy
+import pandas
+import statsmodels.api as sm
+import seaborn
+import statsmodels.formula.api as smf 
+
+# bug fix for display formats to avoid run time errors
+pandas.set_option('display.float_format', lambda x:'%.2f'%x)
+
+data = pandas.read_csv('gapminder.csv', low_memory=False)
+
+##############################################################################
+# DATA MANAGEMENT
+##############################################################################
+
+#call in data set
+data = pandas.read_csv('gapminder.csv')
+
+# convert variables to numeric format using convert_objects function
+data['alcconsumption'] = pandas.to_numeric(data['alcconsumption'], errors='coerce')
+data['armedforcesrate'] = pandas.to_numeric(data['armedforcesrate'], errors='coerce')
+data['employrate'] = pandas.to_numeric(data['employrate'], errors='coerce')
+
+# listwise deletion of missing values
+sub1 = data[['armedforcesrate', 'employrate', 'alcconsumption']].dropna()
+
+avg1 = sub1['alcconsumption'].mean()
+print('Mean for alcconsumption:' , avg1)
+
+avg2 = sub1['armedforcesrate'].mean()
+print('Mean for armedforcesrate:' , avg2)
+
+avg3 = sub1['employrate'].mean()
+print('Mean for employrate:' , avg3)
+
+# Collapsing into categories
+def Alc (row):
+   if row['alcconsumption'] > avg1 :
+      return 1
+   elif row['alcconsumption'] <=avg1 :
+      return 0
+sub1['Alc'] = sub1.apply (lambda row: Alc (row),axis=1)
+chk2 = sub1['crit1'].value_counts(sort=False, dropna=False)
+print (chk2)
+
+# Collapsing into categories
+def Arm (row):
+   if row['armedforcesrate'] > avg2 :
+      return 1
+   elif row['armedforcesrate'] <=avg2 :
+      return 0
+sub1['Arm'] = sub1.apply (lambda row: Arm (row),axis=1)
+chk3 = sub1['Arm'].value_counts(sort=False, dropna=False)
+print (chk3)
+
+# Collapsing into categories
+def Emp (row):
+   if row['employrate'] > avg3 :
+      return 1
+   elif row['employrate'] <=avg3 :
+      return 0
+sub1['Emp'] = sub1.apply (lambda row: Emp (row),axis=1)
+chk4 = sub1['Emp'].value_counts(sort=False, dropna=False)
+print (chk4)
+
+
+
+##############################################################################
+# LOGISTIC REGRESSION
+##############################################################################
+
+# logistic regression with social phobia
+lreg1 = smf.logit(formula = 'Alc ~ Arm', data = sub1).fit()
+print (lreg1.summary())
+# odds ratios
+print ("Odds Ratios")
+print (numpy.exp(lreg1.params))
+
+# odd ratios with 95% confidence intervals
+params = lreg1.params
+conf = lreg1.conf_int()
+conf['OR'] = params
+conf.columns = ['Lower CI', 'Upper CI', 'OR']
+print (numpy.exp(conf))
+
+# logistic regression with panic and depression
+lreg4 = smf.logit(formula = 'Alc ~ Arm+ Emp', data = sub1).fit()
+print (lreg4.summary())
+
+# odd ratios with 95% confidence intervals
+print ("Odds Ratios")
+params = lreg4.params
+conf = lreg4.conf_int()
+conf['OR'] = params
+conf.columns = ['Lower CI', 'Upper CI', 'OR']
+print (numpy.exp(conf))
